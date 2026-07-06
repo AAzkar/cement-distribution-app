@@ -15,11 +15,17 @@ class AppSetting extends Model implements HasMedia
 
     public static function current(): self
     {
-        if (! \Illuminate\Support\Facades\Schema::hasTable('app_settings')) {
+        try {
+            if (! \Illuminate\Support\Facades\Schema::hasTable('app_settings')) {
+                return new static(['company_name' => 'Cement Distribution Co']);
+            }
+
+            return static::query()->firstOrCreate(['id' => 1]);
+        } catch (\Throwable) {
+            // No database reachable at all yet (e.g. fresh install before .env
+            // exists, or during `composer install`'s package:discover hook).
             return new static(['company_name' => 'Cement Distribution Co']);
         }
-
-        return static::query()->firstOrCreate(['id' => 1]);
     }
 
     public function logo(): ?Media
