@@ -1,0 +1,19 @@
+<?php
+
+namespace App\Filament\Resources\ChequeIssuedResource\Pages;
+
+use App\Filament\Resources\ChequeIssuedResource;
+use Filament\Actions;
+use Filament\Resources\Pages\ListRecords;
+
+class ListChequeIssueds extends ListRecords
+{
+    protected static string $resource = ChequeIssuedResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\CreateAction::make(),
+        ];
+    }
+}
