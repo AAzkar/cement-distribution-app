@@ -36,6 +36,10 @@ class SalesOrderService
             throw new RuntimeException('Only draft orders can be confirmed.');
         }
 
+        if ($overage = $order->customer->creditLimitExceededBy((float) $order->total_amount)) {
+            throw new RuntimeException("Confirming this order would put {$order->customer->name} LKR ".number_format($overage, 2).' over their credit limit.');
+        }
+
         return DB::transaction(function () use ($order, $user) {
             $items = $order->items()->with('product')->get();
 

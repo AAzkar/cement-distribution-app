@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Filament\Concerns\AuthorizesWithPermissions;
 use App\Filament\Resources\WarehouseResource\Pages;
 use App\Filament\Resources\WarehouseResource\RelationManagers;
 use App\Models\Warehouse;
@@ -15,9 +16,13 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class WarehouseResource extends Resource
 {
+    use AuthorizesWithPermissions;
+
     protected static ?string $model = Warehouse::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    protected static string $permissionModule = 'warehouses';
 
     public static function form(Form $form): Form
     {

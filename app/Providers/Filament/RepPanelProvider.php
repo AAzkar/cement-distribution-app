@@ -11,6 +11,7 @@ use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
@@ -34,6 +35,10 @@ class RepPanelProvider extends PanelProvider
                 'primary' => AppSetting::panelColor(Color::Emerald),
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => view('filament.rep.pwa-head'),
+            )
             ->discoverResources(in: app_path('Filament/Rep/Resources'), for: 'App\\Filament\\Rep\\Resources')
             ->discoverPages(in: app_path('Filament/Rep/Pages'), for: 'App\\Filament\\Rep\\Pages')
             ->pages([

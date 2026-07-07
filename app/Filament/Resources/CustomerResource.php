@@ -50,6 +50,8 @@ class CustomerResource extends Resource
                 Forms\Components\Select::make('warehouse_id')
                     ->relationship('warehouse', 'name')->searchable()->preload(),
                 Forms\Components\TextInput::make('opening_balance')->required()->numeric()->default(0)->prefix('LKR '),
+                Forms\Components\TextInput::make('credit_limit')->numeric()->prefix('LKR ')
+                    ->helperText('Leave blank for no credit limit.'),
                 Forms\Components\Toggle::make('is_active')->default(true),
             ]);
     }
@@ -70,6 +72,8 @@ class CustomerResource extends Resource
                     ->state(fn (Customer $record) => $record->outstandingBalance())
                     ->money('lkr')
                     ->color(fn (Customer $record) => $record->outstandingBalance() > 0 ? 'danger' : 'success'),
+                Tables\Columns\TextColumn::make('credit_limit')->money('lkr')->placeholder('No limit')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('is_active')->boolean(),
             ])
             ->filters([

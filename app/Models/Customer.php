@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 
-#[Fillable(['name', 'code', 'type', 'phone', 'email', 'address', 'zone_id', 'warehouse_id', 'opening_balance', 'is_active'])]
+#[Fillable(['name', 'code', 'type', 'phone', 'email', 'address', 'zone_id', 'warehouse_id', 'opening_balance', 'credit_limit', 'is_active'])]
 class Customer extends Model
 {
     use LogsActivity;
@@ -27,6 +27,7 @@ class Customer extends Model
         return [
             'is_active' => 'boolean',
             'opening_balance' => 'decimal:2',
+            'credit_limit' => 'decimal:2',
         ];
     }
 
@@ -90,5 +91,16 @@ class Customer extends Model
             ->sum('amount');
 
         return (float) $this->opening_balance + (float) $ordered - (float) $paidByCashbook - (float) $paidByCheque;
+    }
+
+    public function creditLimitExceededBy(float $additionalAmount): ?float
+    {
+        if ($this->credit_limit === null) {
+            return null;
+        }
+
+        $overage = $this->outstandingBalance() + $additionalAmount - (float) $this->credit_limit;
+
+        return $overage > 0 ? $overage : null;
     }
 }
