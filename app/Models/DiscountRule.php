@@ -5,16 +5,25 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['product_id', 'name', 'min_bags', 'max_bags', 'discount_type', 'discount_value', 'is_active'])]
 class DiscountRule extends Model
 {
+    use LogsActivity;
+
     protected function casts(): array
     {
         return [
             'discount_value' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty();
     }
 
     public function product(): BelongsTo

@@ -6,10 +6,14 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['bank_account_id', 'period_start', 'period_end', 'statement_balance', 'book_balance', 'status', 'completed_by', 'completed_at'])]
 class BankReconciliation extends Model
 {
+    use LogsActivity;
+
     protected function casts(): array
     {
         return [
@@ -19,6 +23,11 @@ class BankReconciliation extends Model
             'book_balance' => 'decimal:2',
             'completed_at' => 'datetime',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty();
     }
 
     public function bankAccount(): BelongsTo

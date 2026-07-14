@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable([
     'name', 'metric', 'rule_type', 'min_target', 'slabs', 'allowance_type',
@@ -13,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class IncentiveRule extends Model
 {
+    use LogsActivity;
+
     protected function casts(): array
     {
         return [
@@ -22,6 +26,11 @@ class IncentiveRule extends Model
             'percentage' => 'decimal:2',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logFillable()->logOnlyDirty();
     }
 
     public function warehouse(): BelongsTo
