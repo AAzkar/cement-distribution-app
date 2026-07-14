@@ -40,6 +40,10 @@ class RepPanelProvider extends PanelProvider
                 PanelsRenderHook::HEAD_END,
                 fn () => view('filament.rep.pwa-head'),
             )
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn () => view('filament.shared.sidebar-spacing'),
+            )
             ->discoverResources(in: app_path('Filament/Rep/Resources'), for: 'App\\Filament\\Rep\\Resources')
             ->discoverPages(in: app_path('Filament/Rep/Pages'), for: 'App\\Filament\\Rep\\Pages')
             ->pages([
