@@ -77,7 +77,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'sales_orders' => ['view', 'create', 'edit', 'delete', 'approve'],
             'goods_receipts' => ['view', 'create', 'edit', 'approve'],
             'stock_transfers' => ['view', 'create', 'edit', 'approve'],
-            'warehouse_stocks' => ['view'],
+            'warehouse_stocks' => ['view', 'edit'],
         ]));
 
         $salesRep = Role::firstOrCreate(['name' => 'Sales Representative', 'guard_name' => 'web']);

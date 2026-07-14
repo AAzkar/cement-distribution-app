@@ -83,6 +83,11 @@ class CustomerResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\Action::make('statement')
+                    ->label('Statement')
+                    ->icon('heroicon-o-document-text')
+                    ->color('gray')
+                    ->url(fn (Customer $record) => Pages\CustomerStatement::getUrl(['record' => $record])),
                 Tables\Actions\Action::make('viewQr')
                     ->label('QR Code')
                     ->icon('heroicon-o-qr-code')
@@ -129,6 +134,7 @@ class CustomerResource extends Resource
             'index' => Pages\ListCustomers::route('/'),
             'create' => Pages\CreateCustomer::route('/create'),
             'edit' => Pages\EditCustomer::route('/{record}/edit'),
+            'statement' => Pages\CustomerStatement::route('/{record}/statement'),
         ];
     }
 }

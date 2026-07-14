@@ -35,6 +35,7 @@ class RepPanelProvider extends PanelProvider
                 'primary' => AppSetting::panelColor(Color::Emerald),
             ])
             ->sidebarCollapsibleOnDesktop()
+            ->databaseNotifications()
             ->renderHook(
                 PanelsRenderHook::HEAD_END,
                 fn () => view('filament.rep.pwa-head'),

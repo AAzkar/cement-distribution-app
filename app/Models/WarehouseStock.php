@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WarehouseStock extends Model
 {
-    protected $fillable = ['warehouse_id', 'product_id', 'quantity'];
+    protected $fillable = ['warehouse_id', 'product_id', 'quantity', 'reorder_level'];
 
     public function warehouse(): BelongsTo
     {
@@ -17,5 +17,10 @@ class WarehouseStock extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function isLowStock(): bool
+    {
+        return $this->reorder_level !== null && $this->quantity <= $this->reorder_level;
     }
 }

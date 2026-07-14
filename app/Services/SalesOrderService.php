@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\SalesOrder;
 use App\Models\User;
+use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -37,7 +38,15 @@ class SalesOrderService
         }
 
         if ($overage = $order->customer->creditLimitExceededBy((float) $order->total_amount)) {
-            throw new RuntimeException("Confirming this order would put {$order->customer->name} LKR ".number_format($overage, 2).' over their credit limit.');
+            $message = "Confirming order {$order->order_no} would put {$order->customer->name} LKR ".number_format($overage, 2).' over their credit limit.';
+
+            Notification::make()
+                ->title('Credit limit exceeded')
+                ->body($message)
+                ->danger()
+                ->sendToDatabase(User::role('Admin')->get());
+
+            throw new RuntimeException($message);
         }
 
         return DB::transaction(function () use ($order, $user) {

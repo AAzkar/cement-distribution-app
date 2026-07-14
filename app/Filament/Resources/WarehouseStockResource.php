@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\WarehouseStockResource\Pages;
 use App\Models\WarehouseStock;
+use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -48,12 +49,37 @@ class WarehouseStockResource extends Resource
                 Tables\Columns\TextColumn::make('warehouse.name')->sortable(),
                 Tables\Columns\TextColumn::make('product.name')->sortable(),
                 Tables\Columns\TextColumn::make('quantity')->label('Bags on Hand')->sortable()
-                    ->color(fn (WarehouseStock $record) => $record->quantity <= 0 ? 'danger' : 'success'),
+                    ->color(fn (WarehouseStock $record) => match (true) {
+                        $record->quantity <= 0 => 'danger',
+                        $record->isLowStock() => 'warning',
+                        default => 'success',
+                    }),
+                Tables\Columns\TextColumn::make('reorder_level')->label('Reorder Level')
+                    ->placeholder('Not set')->sortable(),
             ])
             ->defaultSort('quantity', 'asc')
             ->filters([
                 Tables\Filters\SelectFilter::make('warehouse_id')->relationship('warehouse', 'name'),
                 Tables\Filters\SelectFilter::make('product_id')->relationship('product', 'name'),
+                Tables\Filters\Filter::make('low_stock')
+                    ->label('Low stock only')
+                    ->query(fn ($query) => $query->whereNotNull('reorder_level')->whereColumn('quantity', '<=', 'reorder_level')),
+            ])
+            ->actions([
+                Tables\Actions\Action::make('setReorderLevel')
+                    ->label('Set Reorder Level')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->visible(fn () => Auth::user()?->can('warehouse_stocks.edit') ?? false)
+                    ->fillForm(fn (WarehouseStock $record) => ['reorder_level' => $record->reorder_level])
+                    ->form([
+                        Forms\Components\TextInput::make('reorder_level')
+                            ->label('Reorder Level')
+                            ->numeric()
+                            ->minValue(0)
+                            ->nullable()
+                            ->helperText('Alerts fire when bags on hand drop to or below this level. Leave blank to disable alerts for this item.'),
+                    ])
+                    ->action(fn (WarehouseStock $record, array $data) => $record->update(['reorder_level' => $data['reorder_level']])),
             ]);
     }
 

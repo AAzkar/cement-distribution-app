@@ -77,4 +77,8 @@
             @endforelse
         </x-filament::section>
     </div>
+
+    <div class="mt-6 space-y-6">
+        @include('filament.customers._ledger', ['ledger' => $this->ledger(), 'aging' => $this->aging()])
+    </div>
 </x-filament-panels::page>

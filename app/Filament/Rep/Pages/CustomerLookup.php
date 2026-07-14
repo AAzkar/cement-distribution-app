@@ -3,6 +3,7 @@
 namespace App\Filament\Rep\Pages;
 
 use App\Models\Customer;
+use App\Services\CustomerLedgerService;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 
@@ -39,6 +40,16 @@ class CustomerLookup extends Page
     public function recentCheques(): \Illuminate\Support\Collection
     {
         return $this->customerRecord->chequesReceived()->latest('received_date')->limit(5)->get();
+    }
+
+    public function ledger(): array
+    {
+        return app(CustomerLedgerService::class)->buildLedger($this->customerRecord);
+    }
+
+    public function aging(): array
+    {
+        return app(CustomerLedgerService::class)->agingBuckets($this->customerRecord);
     }
 
     public function newOrderUrl(): string

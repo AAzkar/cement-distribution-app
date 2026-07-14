@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Warehouse;
 use App\Models\WarehouseStock;
 use Carbon\CarbonInterface;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -23,7 +24,7 @@ class StockService
         ?CarbonInterface $date = null,
         ?string $notes = null,
     ): StockMovement {
-        return DB::transaction(function () use ($warehouse, $product, $delta, $type, $user, $reference, $date, $notes) {
+        [$movement, $stock, $crossedLowStock] = DB::transaction(function () use ($warehouse, $product, $delta, $type, $user, $reference, $date, $notes) {
             $stock = WarehouseStock::where('warehouse_id', $warehouse->id)
                 ->where('product_id', $product->id)
                 ->lockForUpdate()
@@ -37,9 +38,11 @@ class StockService
                 ]);
             }
 
+            $before = $stock->quantity;
             $stock->increment('quantity', $delta);
+            $after = $stock->quantity;
 
-            return StockMovement::create([
+            $movement = StockMovement::create([
                 'warehouse_id' => $warehouse->id,
                 'product_id' => $product->id,
                 'movement_date' => $date ?? now(),
@@ -50,7 +53,36 @@ class StockService
                 'notes' => $notes,
                 'created_by' => $user->id,
             ]);
+
+            $crossedLowStock = $stock->reorder_level !== null
+                && $before > $stock->reorder_level
+                && $after <= $stock->reorder_level;
+
+            return [$movement, $stock, $crossedLowStock];
         });
+
+        if ($crossedLowStock) {
+            $this->notifyLowStock($stock, $warehouse, $product);
+        }
+
+        return $movement;
+    }
+
+    private function notifyLowStock(WarehouseStock $stock, Warehouse $warehouse, Product $product): void
+    {
+        $recipients = User::role(['Admin', 'Warehouse Manager'])->get()
+            ->merge(User::whereHas('warehouses', fn ($query) => $query->where('warehouses.id', $warehouse->id))->get())
+            ->unique('id');
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        Notification::make()
+            ->title("Low stock: {$product->name} at {$warehouse->name}")
+            ->body("Only {$stock->quantity} bags remaining (reorder level: {$stock->reorder_level}).")
+            ->warning()
+            ->sendToDatabase($recipients);
     }
 
     public function quantityOnHand(Warehouse $warehouse, Product $product): int
