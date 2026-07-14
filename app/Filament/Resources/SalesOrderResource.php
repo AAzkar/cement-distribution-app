@@ -13,11 +13,13 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
+use RuntimeException;
 
 class SalesOrderResource extends Resource
 {
@@ -189,30 +191,49 @@ class SalesOrderResource extends Resource
                     ->visible(fn (SalesOrder $record) => $record->status === 'draft' && Auth::user()->can('sales_orders.approve'))
                     ->requiresConfirmation()
                     ->action(function (SalesOrder $record) {
-                        app(SalesOrderService::class)->confirm($record, Auth::user());
+                        static::runOrNotify(fn () => app(SalesOrderService::class)->confirm($record, Auth::user()));
                     }),
                 Tables\Actions\Action::make('deliver')
                     ->icon('heroicon-o-truck')
                     ->visible(fn (SalesOrder $record) => $record->status === 'confirmed' && Auth::user()->can('sales_orders.approve'))
                     ->requiresConfirmation()
-                    ->action(fn (SalesOrder $record) => app(SalesOrderService::class)->deliver($record)),
+                    ->action(function (SalesOrder $record) {
+                        static::runOrNotify(fn () => app(SalesOrderService::class)->deliver($record));
+                    }),
                 Tables\Actions\Action::make('invoice')
                     ->icon('heroicon-o-document-text')
                     ->visible(fn (SalesOrder $record) => in_array($record->status, ['confirmed', 'delivered']) && Auth::user()->can('sales_orders.approve'))
                     ->requiresConfirmation()
-                    ->action(fn (SalesOrder $record) => app(SalesOrderService::class)->invoice($record)),
+                    ->action(function (SalesOrder $record) {
+                        static::runOrNotify(fn () => app(SalesOrderService::class)->invoice($record));
+                    }),
                 Tables\Actions\Action::make('cancel')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->visible(fn (SalesOrder $record) => ! in_array($record->status, ['cancelled']) && Auth::user()->can('sales_orders.approve'))
                     ->requiresConfirmation()
-                    ->action(fn (SalesOrder $record) => app(SalesOrderService::class)->cancel($record, Auth::user())),
+                    ->action(function (SalesOrder $record) {
+                        static::runOrNotify(fn () => app(SalesOrderService::class)->cancel($record, Auth::user()));
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+    protected static function runOrNotify(\Closure $callback): void
+    {
+        try {
+            $callback();
+        } catch (RuntimeException $e) {
+            Notification::make()
+                ->title('Action failed')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+        }
     }
 
     public static function getPages(): array
